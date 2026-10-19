@@ -24,5 +24,18 @@ function pianoVoicings(tonic,tones,kind='full'){
  }
  return result;
 }
-const api={tuning,guitarVoicings,pianoVoicings};if(typeof module!=='undefined')module.exports=api;else root.ChordVoicings=api;
+function simpleGuitarVoicings(tonic,tones,kind='full',quality=''){
+ const candidates=guitarVoicings(tonic,tones,kind,quality),labels=['Low E string','A string','D string','G string','B string','High e string'];
+ const firstRoot=v=>v.frets.findIndex((f,i)=>f!==null&&(tuning[i]+f)%12===tonic);
+ const score=v=>{const played=v.frets.filter(f=>f!==null);return (v.inversion==='Root position'?0:100)+Math.max(...played)+.1*(Math.max(...played)-Math.min(...played));};
+ return labels.flatMap((label,string)=>{const group=candidates.filter(v=>firstRoot(v)===string).sort((a,b)=>score(a)-score(b));return group.length?[{...group[0],label:'Root on '+label,rootString:string}]:[];});
+}
+function simplePianoVoicings(tonic,tones,kind='full'){
+ return pianoVoicings(tonic,tones,kind).filter(v=>v.id.startsWith('closed')).map(v=>{
+  const index=v.midis.findIndex(n=>n%12===tonic),last=v.midis.length-1;
+  const label=index===0?'Root at bottom':index===last?'Root at top':last===2?'Root in middle':index===1?'Root in lower middle':'Root in upper middle';
+  return {...v,label,rootIndex:index};
+ }).sort((a,b)=>a.rootIndex-b.rootIndex);
+}
+const api={tuning,guitarVoicings,pianoVoicings,simpleGuitarVoicings,simplePianoVoicings};if(typeof module!=='undefined')module.exports=api;else root.ChordVoicings=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

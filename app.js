@@ -25,13 +25,13 @@ function diagram(){
  const c=auditionChord||progression()[selected],root=(key+c[0])%12,kind=$('voicing-kind').value,tones=intervals[c[1]];
  $('chordTitle').textContent=chordName(c);$('guitar').classList.toggle('selected',instrument==='guitar');$('piano').classList.toggle('selected',instrument==='piano');
  const identity=[root,c[1],instrument,kind].join(':');
- displayedVoicings=instrument==='guitar'?ChordVoicings.guitarVoicings(root,tones,kind,c[1]):ChordVoicings.pianoVoicings(root,tones,kind);
+ displayedVoicings=instrument==='guitar'?ChordVoicings.simpleGuitarVoicings(root,tones,kind,c[1]):ChordVoicings.simplePianoVoicings(root,tones,kind);
  const prior=identity===diagramIdentity?$('voicing').value:null;diagramIdentity=identity;
- $('voicing').innerHTML=displayedVoicings.map((v,i)=>`<option value="${i}">${v.label}${v.frets?' · '+v.frets.map(f=>f===null?'×':f).join(' '):''}</option>`).join('');
+ $('voicing').innerHTML=displayedVoicings.map((v,i)=>`<option value="${i}">${v.label}</option>`).join('');
  if(prior!==null&&displayedVoicings[+prior])$('voicing').value=prior;
  const v=displayedVoicings[+$('voicing').value];
  const note=n=>names[n%12]+(Math.floor(n/12)-1);
- $('voicing-notes').textContent=v.midis.map(note).join(' · ')+(v.omitted.length?' — Triad reduction: seventh omitted; this is not the complete '+chordName(c)+' chord.':' — '+v.inversion+'.');
+ $('voicing-notes').textContent=v.midis.map(note).join(' · ')+(v.omitted.length?' — Triad: seventh omitted.':'');
  if(instrument==='guitar'){
   const fretted=v.frets.filter(f=>f!==null&&f>0),start=fretted.length&&Math.max(...fretted)>5?Math.min(...fretted):1;
   let s=`<svg viewBox="0 0 270 255" role="img" aria-label="${chordName(c)} guitar ${v.label}">`;
@@ -39,14 +39,14 @@ function diagram(){
   for(let i=0;i<6;i++)s+=`<line x1="60" x2="205" y1="${38+i*30}" y2="${38+i*30}" stroke="#aab39b" stroke-width="${i===0&&start===1?4:1}"/>`;
   s+=`<text x="20" y="58" font-size="12" fill="#667657">${start}fr</text>`;
   v.frets.forEach((f,i)=>{const x=60+i*29;s+=f===null?`<text x="${x}" y="26" text-anchor="middle" font-size="16" fill="#5a7341">×</text>`:f===0?`<circle cx="${x}" cy="24" r="5" fill="none" stroke="#5a7341"/>`:`<circle cx="${x}" cy="${38+(f-start+.5)*30}" r="10" fill="#5a7341"/><text x="${x}" y="${42+(f-start+.5)*30}" text-anchor="middle" font-size="10" fill="#2b211a">${((ChordVoicings.tuning[i]+f-root)%12+12)%12===0?'R':''}</text>`;});
-  $('diagram').innerHTML=s+'</svg>';$('hint').textContent='Standard tuning, low E at left. × = mute; circles = open; R = fretted root. Numbers in the selector are frets, not fingers. Choose a shape that feels comfortable; partial barres may help.';
+  $('diagram').innerHTML=s+'</svg>';$('hint').textContent='Standard tuning, low E at left. × = mute · ○ = open string · R = fretted root.';
  }else{
   let low=Math.min(...v.midis),high=Math.max(...v.midis);if([1,3,6,8,10].includes(low%12))low--;if([1,3,6,8,10].includes(high%12))high++;const white=[];
   for(let n=low;n<=high;n++)if([0,2,4,5,7,9,11].includes(n%12))white.push(n);
   const width=white.length*32;let s=`<svg viewBox="0 0 ${width} 175" role="img" aria-label="${chordName(c)} piano ${v.label}">`;
   white.forEach((n,i)=>s+=`<rect x="${i*32}" y="5" width="30" height="155" rx="3" fill="${v.midis.includes(n)?'#c4d5a5':'#fff'}" stroke="#b8bfab"/><text x="${i*32+15}" y="145" text-anchor="middle" font-size="9" fill="#47573b">${note(n)}</text>`);
   white.forEach((n,i)=>{if(![0,2,5,7,9].includes(n%12)||n+1>high)return;s+=`<rect x="${i*32+21}" y="5" width="20" height="96" rx="3" fill="${v.midis.includes(n+1)?'#7d995b':'#354335'}"/><text x="${i*32+31}" y="84" text-anchor="middle" font-size="7" fill="white">${note(n+1)}</text>`;});
-  $('diagram').innerHTML=s+'</svg>';$('hint').textContent='Highlighted keys show the exact notes and octaves, including the inversion or spread. Octave labels use C4 = middle C.';
+  $('diagram').innerHTML=s+'</svg>';$('hint').textContent='Play the highlighted keys. C4 = middle C.';
  }
 }
 $('voicing-kind').onchange=()=>{stop();diagram()};$('voicing').onchange=()=>{stop();diagram()};
