@@ -44,14 +44,14 @@ function finishCapture(message){
   if(active.mode==='melody'&&notes.length>=10){
     // Ignore a small number of transient pitch outliers; the singer can correct the estimates.
     $('melody-low').value=notes[Math.floor(notes.length*.02)];$('melody-high').value=notes[Math.min(notes.length-1,Math.floor(notes.length*.98))];
-    message='Melody range estimated. Check these notes: short extremes may be missed. Set its current key before finding keys.';
-  }else if(active.mode==='melody')message='Not enough stable singing detected. Try again or enter melody notes manually.';
+    message ||= 'Melody range estimated. Check these notes: short extremes may be missed. Set its current key before finding keys.';
+  }else if(active.mode==='melody')message ||= 'Not enough stable singing detected. Try again or enter melody notes manually.';
   $('voice-status').textContent=message||'Microphone stopped. You can edit the detected note.';
 }
 async function capture(mode){
   if(session)return;
   if(!navigator.mediaDevices?.getUserMedia||!window.isSecureContext){$('voice-status').textContent='Microphone access needs HTTPS and a supported browser. You can still choose notes manually.';return;}
-  stop();$('mix-before')?.pause();$('mix-after')?.pause();const active={mode,notes:[],recent:[]};session=active;
+  window.dispatchEvent(new CustomEvent('songroom:audio-play',{detail:'voice'}));stop();$('mix-before')?.pause();$('mix-after')?.pause();const active={mode,notes:[],recent:[]};session=active;
   document.querySelectorAll('.voice-actions button, #capture-melody').forEach(b=>b.disabled=true);$('voice-stop').hidden=false;
   $('voice-status').textContent='Allow microphone access, then sing a steady note.';
   try{
@@ -74,6 +74,7 @@ async function capture(mode){
   }catch(error){if(session===active)finishCapture(error.name==='NotAllowedError'?'Microphone permission was denied. Allow it in browser settings, or choose notes manually.':'Could not access the microphone. Check your input device, or choose notes manually.');}
 }
 $('capture-low').onclick=()=>capture('low');$('capture-high').onclick=()=>capture('high');$('capture-melody').onclick=()=>capture('melody');$('voice-stop').onclick=()=>finishCapture();
+window.addEventListener('songroom:audio-play',e=>{if(e.detail!=='voice'&&session)finishCapture('Microphone stopped for audio playback.');});
 window.addEventListener('pagehide',()=>finishCapture());
 document.addEventListener('visibilitychange',()=>{if(document.hidden)finishCapture()});
 $('recommend').onclick=()=>{

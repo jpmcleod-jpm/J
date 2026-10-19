@@ -35,6 +35,6 @@ $('mix-render').onclick=async()=>{
   status.textContent='Processed version ready. Compare both versions at similar listening levels before choosing one.';
  }catch(e){if(token===renderVersion)status.textContent='Could not render: '+e.message;}finally{$('mix-render').disabled=false;}
 };
-for(const [a,b] of [['mix-before','mix-after'],['mix-after','mix-before']])$(a).addEventListener('play',()=>{stop();$(b).pause();});
+for(const [a,b] of [['mix-before','mix-after'],['mix-after','mix-before']])$(a).addEventListener('play',()=>{window.dispatchEvent(new CustomEvent('songroom:audio-play',{detail:'mix'}));stop();$(b).pause();});
 window.addEventListener('pagehide',()=>{if(originalUrl)URL.revokeObjectURL(originalUrl);if(processedUrl)URL.revokeObjectURL(processedUrl)});
 })();
