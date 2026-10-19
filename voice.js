@@ -81,14 +81,14 @@ $('recommend').onclick=()=>{
   if(!$('voice-low').value||!$('voice-high').value||low>=high){box.textContent='Choose a comfortable low and high note, with the high note above the low note.';return;}
   const hasLow=$('melody-low').value!=='',hasHigh=$('melody-high').value!=='';
   if(hasLow!==hasHigh){box.textContent='Enter both melody notes, or leave both blank for a starting-point suggestion.';return;}
-  const supplied=hasLow&&hasHigh,source=supplied?+$('melody-key').value:0;
+  const supplied=hasLow&&hasHigh,source=supplied?+$('melody-key').value:0,recommendMode=mode;
   const mLow=supplied?+$('melody-low').value:60,mHigh=supplied?+$('melody-high').value:72;
   if(mLow>mHigh){box.textContent='The melody’s highest note must be at or above its lowest note.';return;}
   const results=comfortableKeys(low,high,mLow,mHigh,source);const intro=document.createElement('p');
-  intro.textContent=supplied?'These transpositions fit the entered melody inside your comfortable range. Extra room at either end usually helps. Try singing the full song in each key.':'Starting points only: these assume a major-key melody spanning the tonic up one octave. Your actual melody may need a different key. Add its notes above for a closer fit.';box.append(intro);
+  intro.textContent=supplied?'These transpositions fit the entered melody inside your comfortable range. Extra room at either end usually helps. Try singing the full song in each key.':`Starting points only: these assume a ${Harmony.scales[recommendMode].label} melody spanning the tonic up one octave. Your actual melody may need a different key. Add its notes above for a closer fit.`;box.append(intro);
   const seen=new Set();for(const result of results){if(seen.has(result.key))continue;seen.add(result.key);if(seen.size>3)break;
-    const button=document.createElement('button');button.textContent=`Try ${names[result.key]} · melody ${noteName(result.low)}–${noteName(result.high)}${supplied?` · ${result.shift>=0?'+':''}${result.shift} semitones`:''}`;
-    button.onclick=()=>{stop();key=result.key;$('key').value=key;selected=0;render();$('voice-status').textContent=`Progression set to ${names[key]}. Sing the melody in the suggested register; chord playback is accompaniment, not the melody.`;};box.append(button);
+    const button=document.createElement('button');button.textContent=`Try ${names[result.key]} ${Harmony.scales[recommendMode].label} · melody ${noteName(result.low)}–${noteName(result.high)}${supplied?` · ${result.shift>=0?'+':''}${result.shift} semitones`:''}`;
+    button.onclick=()=>{stop();mode=recommendMode;$('mode').value=mode;variants();key=result.key;$('key').value=key;selected=0;render();$('voice-status').textContent=`Progression set to ${names[key]} ${Harmony.scales[mode].label}. Sing the melody in the suggested register; chord playback is accompaniment, not the melody.`;};box.append(button);
   }
   if(!results.length){const p=document.createElement('p');p.textContent='This melody does not fit your entered range in any key. Check the notes, or try a narrower melody. Changing key alone cannot reduce a melody’s span.';box.append(p);}
 };
