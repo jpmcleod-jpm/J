@@ -51,7 +51,7 @@ function finishCapture(message){
 async function capture(mode){
   if(session)return;
   if(!navigator.mediaDevices?.getUserMedia||!window.isSecureContext){$('voice-status').textContent='Microphone access needs HTTPS and a supported browser. You can still choose notes manually.';return;}
-  stop();const active={mode,notes:[],recent:[]};session=active;
+  stop();$('mix-before')?.pause();$('mix-after')?.pause();const active={mode,notes:[],recent:[]};session=active;
   document.querySelectorAll('.voice-actions button, #capture-melody').forEach(b=>b.disabled=true);$('voice-stop').hidden=false;
   $('voice-status').textContent='Allow microphone access, then sing a steady note.';
   try{
