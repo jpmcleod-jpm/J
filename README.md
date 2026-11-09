@@ -61,6 +61,28 @@ Progression options display total bars, and cards show the bar positions and dur
 
 The **Playback Sound** menu offers acoustic-style pluck, clean electric-style, piano-style, electric piano-style, warm organ, and soft pad, plus a volume slider. These are lightweight synthesized approximations, not sampled instruments or amp models. The guitar/piano tabs still select the diagram independently. Saved ideas retain the sound and volume; older ideas default to the acoustic-style sound. Starting a mix preview stops chord playback; starting chords or vocal capture pauses mix previews.
 
+## Producer workspace: make an arrangement and AI instrumental ideas
+
+The **Produce your idea** workspace has two clearly separated tools:
+
+1. **Accompaniment for your original clip (available without any account)** — upload an audio clip using the mixing section, choose a Songroom progression, key and tempo, select drums/bass/keys, and click **Build arrangement**. It creates a new WAV that mixes the original take with synthesized, bar-aligned accompaniment using a 4/4 clock and the selected chords. The first 90 seconds are supported. These are programmed demo sounds, not AI-generated or realistic session musician recordings. Tempo and chords must be set manually to match the clip; no beat, key or chord transcription is performed. The original recording is untouched.
+2. **AI instrumental concept (optional paid integration)** — enter a creative brief, choose a 15- or 30-second draft, enter a private access code and click **Generate AI instrumental**. This calls ElevenLabs Music v2.5 from a server-side Netlify Function, with the current Songroom key, chords, genre and tempo included in the prompt. The output is a newly composed instrumental idea, downloadable as MP3. It is not synchronized to your original clip and does not preserve its recorded voice/guitar or generate isolated, alignable stems. Paid provider calls require configuration and may exceed the Netlify Function timeout.
+
+### Configure AI instrumentals on a Netlify deployment
+
+Set these as **server-side environment variables** for Netlify Functions (never enter API keys into code or commit them to GitHub):
+
+- `ELEVENLABS_API_KEY`: a paid ElevenLabs account API key with Music API access.
+- `SONGROOM_ACCESS_CODE`: a strong, private code you enter into the Songroom producer interface. Requests without a valid code cannot call the paid music API.
+
+In Netlify, open the site's Project configuration → Environment variables, set both values for the relevant production environment, then redeploy. Ensure the Git repository is connected and automatic builds publish new files. Keep the website private or use site authentication when letting other people access this project; the code gate is a basic single-secret safeguard, not a multi-user authentication or provider-rate-limiting system. Monitor provider usage and rotate the secrets if they are shared. The function endpoint is `/.netlify/functions/generate-music`. Test a 15-second concept first; calls are billed by ElevenLabs and can time out if the provider takes over Netlify's synchronous 60-second limit. Do not repeatedly retry timed-out requests without checking the provider account.
+
+The accompaniment/mix tools run locally in your browser; unlike them, AI generation sends only the textual production prompt and music settings to ElevenLabs through Netlify. **The uploaded audio is never sent to ElevenLabs.** ElevenLabs' Audio Reference feature is separate and is not wired into this version. Commercial use depends on the provider's current terms and plan.
+
+### Next iterations
+
+For a complete track-preserving AI producer, we'd need source separation, musical transcription (tempo/key/chords), original-track-aware instrument generation with arrangement control and aligned downloadable stems, and measured loudness/true-peak mastering. These are **not yet implemented**. In particular, don't call the one-click mix helper LUFS mastering or a true-peak limiter.
+
 ## One-click clip Auto-polish
 
 Under **A fresh pair of ears for your mix**, upload a supported mono or stereo audio clip (up to 60 MB / 5 minutes), choose **Balanced polish**, **Warm & smooth**, or **Clear & present**, and click **Auto-polish my clip**. Songroom picks conservative EQ/optional compression settings using simple measurements, renders a new 24-bit WAV, and provides Original/Processed playback and a download. You can adjust the manual controls and re-render. The original is never modified. Processing runs in the browser and remains on your device.
