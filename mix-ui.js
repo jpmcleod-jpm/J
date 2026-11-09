@@ -1,6 +1,7 @@
 (()=>{
 let buffer=null,version=0,renderVersion=0,originalUrl=null,processedUrl=null,filename='song';
 const status=$('mix-status'),analysis=$('mix-analysis'),result=$('mix-result');
+window.songroomMix={getBuffer:()=>buffer};
 const db=n=>Number.isFinite(n)?n.toFixed(1)+' dBFS':'−∞ dBFS';
 let measured=null;
 function renderNotes(lines){const el=$('mix-auto-notes');el.replaceChildren();lines.forEach(line=>{const p=document.createElement('p');p.textContent=line;el.append(p);});}
