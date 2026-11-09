@@ -5,3 +5,24 @@ test('silence, near-full-scale samples, and invalid audio are handled',()=>{asse
 test('peak normalization preserves stereo relationships and silence',()=>{const a=sine(440,.2),b=a.map(v=>v*.5),r=M.normalizeChannels([a,b]);const stats=M.analyzeAudio(r.channels,48000);assert.ok(Math.abs(stats.peakDb+1)<.0001);assert.ok(Math.abs(stats.channelDb[0]-stats.channelDb[1]-6.0206)<.001);assert.deepEqual(Array.from(M.normalizeChannels([new Float32Array(3)]).channels[0]),[0,0,0]);});
 test('24-bit WAV encodes interleaved signed PCM and flags clamping',()=>{const {buffer,clamped}=M.encodeWav([new Float32Array([-1,0,1]),new Float32Array([.5,-.5,0])],48000),v=new DataView(buffer);assert.equal(clamped,0);assert.equal(v.getUint16(22,true),2);assert.equal(v.getUint16(34,true),24);assert.equal(v.getUint32(24,true),48000);assert.equal(v.getUint32(40,true),18);assert.deepEqual(Array.from(new Uint8Array(buffer,44,3)),[0,0,128]);assert.deepEqual(Array.from(new Uint8Array(buffer,56,3)),[255,255,127]);assert.equal(M.encodeWav([new Float32Array([1.1])],48000).clamped,1);});
 test('each playback preset produces finite audio with smooth endpoints and distinct timbre',()=>{const outputs=[];for(const tone of Object.keys(T.presets)){const a=T.synthesizeNote(220,1,12000,tone);assert.equal(a.length,12000);assert.equal(a[0],0);assert.ok(a.every(Number.isFinite));assert.ok(a.some(v=>Math.abs(v)>.05));assert.ok(Math.abs(a[a.length-1])<.01);assert.ok(Math.max(...a.map(Math.abs))<1.1);outputs.push(a);}for(let i=0;i<outputs.length;i++)for(let j=i+1;j<outputs.length;j++)assert.notDeepEqual(outputs[i],outputs[j]);});
+
+test('auto-polish choices stay conservative, explain their decisions, and handle modes',()=>{
+ const src=M.analyzeAudio([sine(440,.2)],48000);
+ for(const style of ['balanced','warm','clear']){
+  const {settings,notes}=M.autoSettings(src,style);
+  assert.equal(settings.normalize,true);
+  assert.equal(settings.trim,0);
+  assert.ok(['bass','mid','treble'].every(k=>Math.abs(settings[k])<=3));
+  assert.equal(typeof settings.compress,'boolean');
+  assert.ok(notes.length>=3);
+ }
+ assert.throws(()=>M.autoSettings({silent:true},'balanced'),/silent/);
+ assert.throws(()=>M.autoSettings(src,'invalid'),/Unknown/);
+});
+test('auto-polish disables compression on already dense, hot material',()=>{
+ const stats={silent:false,bands:[.75,.2,.05],dc:[0],peakDb:-.1,rmsDb:-5,nearFull:10};
+ const {settings}=M.autoSettings(stats,'balanced');
+ assert.equal(settings.compress,false);
+ assert.ok(settings.bass<0);
+ assert.equal(settings.normalize,true);
+});
