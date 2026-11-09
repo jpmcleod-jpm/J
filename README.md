@@ -61,6 +61,12 @@ Progression options display total bars, and cards show the bar positions and dur
 
 The **Playback Sound** menu offers acoustic-style pluck, clean electric-style, piano-style, electric piano-style, warm organ, and soft pad, plus a volume slider. These are lightweight synthesized approximations, not sampled instruments or amp models. The guitar/piano tabs still select the diagram independently. Saved ideas retain the sound and volume; older ideas default to the acoustic-style sound. Starting a mix preview stops chord playback; starting chords or vocal capture pauses mix previews.
 
+## One-click clip Auto-polish
+
+Under **A fresh pair of ears for your mix**, upload a supported mono or stereo audio clip (up to 60 MB / 5 minutes), choose **Balanced polish**, **Warm & smooth**, or **Clear & present**, and click **Auto-polish my clip**. Songroom picks conservative EQ/optional compression settings using simple measurements, renders a new 24-bit WAV, and provides Original/Processed playback and a download. You can adjust the manual controls and re-render. The original is never modified. Processing runs in the browser and remains on your device.
+
+This is rule-based signal processing, not generative AI, automatic multitrack mixing, or a mastering-quality guarantee. It cannot add instruments, fix recording distortion, or separate the components of a stereo clip; peak normalization is not LUFS mastering or a true-peak limiter. Always compare at similar listening levels.
+
 ## Stereo mix helper
 
 In Ableton, use **File → Export Audio/Video** to export the Master/Main output for the desired song range as WAV or AIFF. A MIDI clip and `.als` project have no rendered audio for this tool. Upload a mono/stereo bounce under **A fresh pair of ears for your mix**. WAV is recommended if the browser cannot decode AIFF or another format. Limits: 60 MB, five minutes, and 32 million decoded samples. Files are analyzed and rendered locally, without an AI service, network upload, or persistence.
