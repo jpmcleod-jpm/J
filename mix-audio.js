@@ -26,6 +26,35 @@ function suggestions(a){
  if(a.bands[2]>.35)advice.push('The rough high-band estimate is prominent. Listen for harsh cymbals or sibilance before reducing treble.');
  advice.push('Use small changes and compare at similar listening levels. A stereo bounce cannot rebalance individual tracks, remove all masking, or guarantee a better mix.');return advice;
 }
+
+/**
+ * Conservative automatic processing choices for a single already-mixed clip.
+ * No instrument recognition or trained AI; these are bounded audio-meter heuristics.
+ */
+function autoSettings(stats,style='balanced'){
+ if(stats.silent)throw Error('Cannot auto-polish silent audio.');
+ if(!['balanced','warm','clear'].includes(style))throw Error('Unknown production style.');
+ const bands=stats.bands||[0,0,0];
+ const clamp=n=>Math.max(-3,Math.min(3,n));
+ let bass=bands[0]>.65?-1.5:bands[0]<.10?.5:0;
+ let mid=bands[1]>.72?-.5:0;
+ let treble=bands[2]>.35?-1:bands[2]<.08?.5:0;
+ if(style==='warm'){bass+=.5;treble-=.5;}
+ if(style==='clear'){bass-=.5;mid+=.5;treble+=.5;}
+ const crest=stats.peakDb-stats.rmsDb;
+ const compress=Number.isFinite(crest)&&crest>=10&&stats.rmsDb< -13&&!stats.nearFull;
+ const lowcut=stats.dc.some(v=>Math.abs(v)>.01);
+ const settings={bass:clamp(bass),mid:clamp(mid),treble:clamp(treble),trim:0,lowcut,compress,normalize:true};
+ const label={balanced:'Balanced polish',warm:'Warm & smooth',clear:'Clear & present'}[style];
+ const notes=[
+   label+' uses small tonal changes based on the clip’s approximate frequency balance.',
+   compress?'Gentle compression selected for comparatively strong peaks.':'Compression left off to protect the existing dynamics.',
+   lowcut?'30 Hz low-cut selected because DC offset was detected.':'30 Hz low-cut left off.',
+   'Sample-peak normalization to −1 dBFS. This is not LUFS matching, a true-peak limiter, or a substitute for mixing individual tracks.'
+ ];
+ return {settings,notes};
+}
+
 function normalizeChannels(channels,targetDb=-1){
  let peak=0;for(const ch of channels)for(const v of ch)peak=Math.max(peak,Math.abs(v));const target=10**(targetDb/20),gain=peak>0?target/peak:1;
  return {channels:channels.map(c=>Float32Array.from(c,v=>v*gain)),gainDb:db(gain)};
@@ -49,5 +78,5 @@ async function processAudio(buffer,settings){
  let channels=Array.from({length:rendered.numberOfChannels},(_,i)=>rendered.getChannelData(i));let gainDb=0;if(settings.normalize){const result=normalizeChannels(channels);channels=result.channels;gainDb=result.gainDb;}
  return {channels,sampleRate:rendered.sampleRate,gainDb};
 }
-const api={analyzeAudio,suggestions,normalizeChannels,encodeWav,processAudio};if(typeof module!=='undefined')module.exports=api;else root.MixAudio=api;
+const api={analyzeAudio,suggestions,autoSettings,normalizeChannels,encodeWav,processAudio};if(typeof module!=='undefined')module.exports=api;else root.MixAudio=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
