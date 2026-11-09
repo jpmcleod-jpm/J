@@ -74,6 +74,7 @@ async function processAudio(buffer,settings){
  if(settings.lowcut){const hp=audio.createBiquadFilter();hp.type='highpass';hp.frequency.value=30;hp.Q.value=.707;connect(hp);}
  for(const [type,freq,gain] of [['lowshelf',180,settings.bass],['peaking',1000,settings.mid],['highshelf',4000,settings.treble]]){const filter=audio.createBiquadFilter();filter.type=type;filter.frequency.value=freq;filter.gain.value=gain;filter.Q.value=.7;connect(filter);}
  if(settings.compress){const comp=audio.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=12;comp.ratio.value=2;comp.attack.value=.015;comp.release.value=.2;connect(comp);}
+ if(settings.master){const limiter=audio.createDynamicsCompressor();limiter.threshold.value=-8;limiter.knee.value=4;limiter.ratio.value=12;limiter.attack.value=.003;limiter.release.value=.12;connect(limiter);}
  const output=audio.createGain();output.gain.value=10**(settings.trim/20);connect(output);tail.connect(audio.destination);source.start();const rendered=await audio.startRendering();
  let channels=Array.from({length:rendered.numberOfChannels},(_,i)=>rendered.getChannelData(i));let gainDb=0;if(settings.normalize){const result=normalizeChannels(channels);channels=result.channels;gainDb=result.gainDb;}
  return {channels,sampleRate:rendered.sampleRate,gainDb};
