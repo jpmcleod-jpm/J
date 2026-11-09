@@ -85,6 +85,8 @@ For a complete track-preserving AI producer, we'd need source separation, musica
 
 ## One-click clip Auto-polish
 
+The mix helper also offers **Create mastering preview**. This enables conservative EQ, two dynamics stages and final −1 dBFS sample-peak normalization, then exports a new 24-bit WAV for A/B listening. These are Web Audio compression and EQ effects, **not** AI mixing/mastering, LUFS-targeted loudness normalization, inter-sample true-peak limiting, or a guarantee that the source has been professionally mastered. The existing **Auto-polish my clip** remains a lighter option. Both work fully in your browser.
+
 Under **A fresh pair of ears for your mix**, upload a supported mono or stereo audio clip (up to 60 MB / 5 minutes), choose **Balanced polish**, **Warm & smooth**, or **Clear & present**, and click **Auto-polish my clip**. Songroom picks conservative EQ/optional compression settings using simple measurements, renders a new 24-bit WAV, and provides Original/Processed playback and a download. You can adjust the manual controls and re-render. The original is never modified. Processing runs in the browser and remains on your device.
 
 This is rule-based signal processing, not generative AI, automatic multitrack mixing, or a mastering-quality guarantee. It cannot add instruments, fix recording distortion, or separate the components of a stereo clip; peak normalization is not LUFS mastering or a true-peak limiter. Always compare at similar listening levels.
