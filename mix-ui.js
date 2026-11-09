@@ -2,6 +2,11 @@
 let buffer=null,version=0,renderVersion=0,originalUrl=null,processedUrl=null,filename='song';
 const status=$('mix-status'),analysis=$('mix-analysis'),result=$('mix-result');
 const db=n=>Number.isFinite(n)?n.toFixed(1)+' dBFS':'−∞ dBFS';
+let measured=null;
+function renderNotes(lines){const el=$('mix-auto-notes');el.replaceChildren();lines.forEach(line=>{const p=document.createElement('p');p.textContent=line;el.append(p);});}
+function applyAuto(settings){for(const id of ['bass','mid','treble','trim'])$('mix-'+id).value=settings[id];for(const id of ['lowcut','compress','normalize'])$('mix-'+id).checked=settings[id];change();}
+$('mix-auto').onclick=()=>{if(!buffer||!measured)return;try{const picked=MixAudio.autoSettings(measured,$('mix-style').value);applyAuto(picked.settings);renderNotes(picked.notes);$('mix-render').click();}catch(e){status.textContent='Could not auto-polish: '+e.message;}};
+$('mix-style').onchange=()=>{if(buffer)renderNotes(['Style changed. Click Auto-polish my clip to process it with the new style.']);};
 function text(tag,value,parent){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
 function clearProcessed(){renderVersion++;$('mix-after').pause();$('mix-after').removeAttribute('src');$('mix-after').load();if(processedUrl)URL.revokeObjectURL(processedUrl);processedUrl=null;result.replaceChildren();}
 function settings(){return {bass:+$('mix-bass').value,mid:+$('mix-mid').value,treble:+$('mix-treble').value,trim:+$('mix-trim').value,lowcut:$('mix-lowcut').checked,compress:$('mix-compress').checked,normalize:$('mix-normalize').checked};}
@@ -10,16 +15,16 @@ for(const id of ['bass','mid','treble','trim','lowcut','compress','normalize'])$
 function reset(){for(const id of ['bass','mid','treble','trim'])$('mix-'+id).value='0';$('mix-lowcut').checked=false;$('mix-compress').checked=false;$('mix-normalize').checked=true;change();}
 $('mix-reset').onclick=reset;
 $('mix-file').onchange=async()=>{
- const token=++version;clearProcessed();buffer=null;analysis.replaceChildren();$('mix-controls').disabled=true;$('mix-before').pause();$('mix-before').removeAttribute('src');$('mix-before').load();if(originalUrl)URL.revokeObjectURL(originalUrl);originalUrl=null;
+ const token=++version;clearProcessed();buffer=null;measured=null;$('mix-auto').disabled=true;renderNotes(['Upload a clip to unlock automatic processing. The original is kept unchanged.']);analysis.replaceChildren();$('mix-controls').disabled=true;$('mix-before').pause();$('mix-before').removeAttribute('src');$('mix-before').load();if(originalUrl)URL.revokeObjectURL(originalUrl);originalUrl=null;
  const file=$('mix-file').files[0];if(!file){status.textContent='Choose an audio bounce to start.';return;}let audio;
  try{if(file.size>60*1024*1024)throw Error('Choose an audio bounce smaller than 60 MB.');status.textContent='Reading and measuring your audio…';
   const Audio=window.AudioContext||window.webkitAudioContext;audio=new Audio();const decoded=await audio.decodeAudioData(await file.arrayBuffer());if(token!==version)return;
   if(decoded.duration>300||decoded.length*decoded.numberOfChannels>32000000)throw Error('Use a bounce of five minutes or less (up to 32 million decoded samples).');
-  const channels=Array.from({length:decoded.numberOfChannels},(_,i)=>decoded.getChannelData(i));const stats=MixAudio.analyzeAudio(channels,decoded.sampleRate);buffer=decoded;filename=file.name.replace(/\.[^.]+$/,'');
+  const channels=Array.from({length:decoded.numberOfChannels},(_,i)=>decoded.getChannelData(i));const stats=MixAudio.analyzeAudio(channels,decoded.sampleRate);buffer=decoded;measured=stats;$('mix-auto').disabled=stats.silent;filename=file.name.replace(/\.[^.]+$/,'');
   text('p',`${stats.duration.toFixed(1)} seconds · ${decoded.numberOfChannels===2?'stereo':'mono'} · ${decoded.sampleRate.toLocaleString()} Hz`,analysis);
   const metrics=document.createElement('div');metrics.className='mix-metrics';analysis.append(metrics);text('p',`Sample peak: ${db(stats.peakDb)}`,metrics);text('p',`Average RMS: ${db(stats.rmsDb)}`,metrics);if(stats.correlation!==null)text('p',`Stereo correlation: ${stats.correlation.toFixed(2)}`,metrics);
   const list=document.createElement('ul');MixAudio.suggestions(stats).forEach(t=>text('li',t,list));analysis.append(list);
-  originalUrl=URL.createObjectURL(file);$('mix-before').src=originalUrl;reset();$('mix-controls').disabled=stats.silent;status.textContent=stats.silent?'The audio is nearly silent. Check your Ableton export.':'Audio measured. Start with small adjustments, then render and compare.';
+  originalUrl=URL.createObjectURL(file);$('mix-before').src=originalUrl;reset();$('mix-controls').disabled=stats.silent;status.textContent=stats.silent?'The audio is nearly silent. Check your Ableton export.':'Audio measured. Click Auto-polish my clip for an automatic version, or adjust the manual controls.';
  }catch(e){if(token===version)status.textContent='Could not load audio: '+e.message+' For format errors, try a WAV bounce.';}finally{audio?.close().catch(()=>{});}
 };
 $('mix-render').onclick=async()=>{
